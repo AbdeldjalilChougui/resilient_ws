@@ -168,6 +168,19 @@ void main() {
       expect(p.lastEventId, '5');
     });
 
+    test('an id is only committed by a blank line', () {
+      final p = SseParser();
+      parseAll(['id: 1\ndata: a\n\nid: 9\ndata: partial\n'], p);
+      // The stream ended mid-event, so the last event ID stays at 1.
+      expect(p.lastEventId, '1');
+    });
+
+    test('seeded lastEventId is used until the server sends a new one', () {
+      final p = SseParser(lastEventId: '41');
+      final events = parseAll(['data: a\n\nid: 42\ndata: b\n\n'], p);
+      expect(events.map((e) => e.lastEventId), ['41', '42']);
+    });
+
     test('id containing NULL is ignored', () {
       final p = SseParser();
       parseAll(['id: 1\n\nid: a\u0000b\n\n'], p);

@@ -20,7 +20,9 @@ import 'sse_event.dart';
 class SseParser {
   /// Creates a parser. [lastEventId] seeds the last event ID buffer, which a
   /// reconnecting client carries over from the previous connection.
-  SseParser({String lastEventId = ''}) : _lastEventId = lastEventId;
+  SseParser({String lastEventId = ''})
+      : _lastEventId = lastEventId,
+        _idBuffer = lastEventId;
 
   /// Returns a [StreamTransformer] that parses decoded text into events.
   ///
@@ -48,13 +50,18 @@ class SseParser {
   final StringBuffer _data = StringBuffer();
   String _eventType = '';
   String _lastEventId;
+  String _idBuffer;
   Duration? _retry;
   bool _started = false;
   bool _pendingCr = false;
   bool _closed = false;
 
-  /// The last event ID buffer. Updated by every `id:` field, even when the
-  /// surrounding block carries no data.
+  /// The event source's last event ID string: what a reconnecting client
+  /// sends as `Last-Event-ID`.
+  ///
+  /// As in the standard, an `id:` field takes effect at the blank line that
+  /// ends its block, even when the block carries no data, and never if the
+  /// stream ends before that blank line.
   String get lastEventId => _lastEventId;
 
   /// The reconnection time most recently sent with a `retry:` field, or null
@@ -136,7 +143,7 @@ class SseParser {
           ..write(value)
           ..write('\n');
       case 'id':
-        if (!value.contains('\u0000')) _lastEventId = value;
+        if (!value.contains('\u0000')) _idBuffer = value;
       case 'retry':
         if (value.isNotEmpty && _allAsciiDigits(value)) {
           final ms = int.tryParse(value);
@@ -149,6 +156,7 @@ class SseParser {
   }
 
   void _dispatch(List<SseEvent> out) {
+    _lastEventId = _idBuffer;
     if (_data.isEmpty) {
       _eventType = '';
       return;
