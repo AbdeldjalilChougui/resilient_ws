@@ -4,8 +4,8 @@ description: >-
   backoff with jitter, fresh tokens, heartbeats, buffering and resubscribe.
 version: 0.1.0
 homepage: https://abdeldjalilchougui.biz/
-repository: https://github.com/AbeldjalilChougui/resilient_ws
-issue_tracker: https://github.com/AbeldjalilChougui/resilient_ws/issues
+repository: https://github.com/AbdeldjalilChougui/resilient_ws
+issue_tracker: https://github.com/AbdeldjalilChougui/resilient_ws/issues
 topics:
   - websocket
   - sse
